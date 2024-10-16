@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'ACTION', choices: ['START', 'STOP', 'RESTART'], description: 'Select the action to perform')
+    }
+
+    stages {
+        stage('Manage Microservice') {
+            steps {
+                script {
+                    def action = params.ACTION
+                    def namespace = 'default' // Change this if your service is in a different namespace
+                    def deploymentName = 'myapp' // Replace with your deployment name
+
+                    if (action == 'START') {
+                        sh "kubectl rollout resume deployment/${deploymentName} -n ${namespace}"
+                    } else if (action == 'STOP') {
+                        sh "kubectl rollout pause deployment/${deploymentName} -n ${namespace}"
+                    } else if (action == 'RESTART') {
+                        sh "kubectl rollout restart deployment/${deploymentName} -n ${namespace}"
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            echo "Successfully performed ${params.ACTION} on ${deploymentName}"
+        }
+        failure {
+            echo "Failed to perform ${params.ACTION} on ${deploymentName}"
+        }
+    }
+}
